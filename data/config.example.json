@@ -1,0 +1,7 @@
+{
+  "mode": "demo",
+  "base_url": "",
+  "api_key": "",
+  "poll_interval": 2,
+  "output_dir": ""
+}
