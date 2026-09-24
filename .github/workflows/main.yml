@@ -1,0 +1,112 @@
+name: Build Hn38videoAItool
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      # 1. Lấy source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Cài Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. Kiểm tra cấu trúc project
+      - name: Check project structure
+        shell: pwsh
+        run: |
+          Write-Host "========================================"
+          Write-Host " KIEM TRA PROJECT"
+          Write-Host "========================================"
+
+          Write-Host ""
+          Write-Host "ROOT:"
+          Get-ChildItem -Force
+
+          if (!(Test-Path "desktop")) {
+            throw "Khong tim thay thu muc desktop"
+          }
+
+          if (!(Test-Path "desktop\main.py")) {
+            throw "Khong tim thay desktop\main.py"
+          }
+
+          if (!(Test-Path "Hn38videoAItool.spec")) {
+            throw "Khong tim thay Hn38videoAItool.spec"
+          }
+
+          if (!(Test-Path "requirements")) {
+            throw "Khong tim thay file requirements"
+          }
+
+          Write-Host ""
+          Write-Host "OK - CAU TRUC PROJECT HOP LE"
+
+      # 4. Cài thư viện
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements
+          pip install pyinstaller
+
+      # 5. Kiểm tra Python
+      - name: Check Python
+        shell: pwsh
+        run: |
+          python --version
+          pip --version
+          pyinstaller --version
+
+      # 6. Kiểm tra syntax toàn bộ source
+      - name: Check Python syntax
+        shell: pwsh
+        run: |
+          python -m compileall desktop
+
+      # 7. Build EXE
+      - name: Build EXE
+        shell: pwsh
+        run: |
+          python -m PyInstaller --clean --noconfirm Hn38videoAItool.spec
+
+      # 8. Kiểm tra file EXE
+      - name: Check build output
+        shell: pwsh
+        run: |
+          Write-Host "========================================"
+          Write-Host " KIEM TRA BUILD"
+          Write-Host "========================================"
+
+          if (!(Test-Path "dist")) {
+            throw "Khong co thu muc dist"
+          }
+
+          Get-ChildItem "dist" -Recurse
+
+          if (!(Test-Path "dist\Hn38videoAItool.exe")) {
+            throw "Khong tim thay dist\Hn38videoAItool.exe"
+          }
+
+          Write-Host ""
+          Write-Host "BUILD THANH CONG!"
+          Write-Host "EXE: dist\Hn38videoAItool.exe"
+
+      # 9. Upload EXE để tải về từ GitHub Actions
+      - name: Upload Windows EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hn38videoAItool-Windows
+          path: dist/Hn38videoAItool.exe
+          if-no-files-found: error
